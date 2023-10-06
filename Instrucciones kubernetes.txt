@@ -1,0 +1,63 @@
+1. Actualizar paquetes:
+sudo apt-get update && sudo apt-get upgrade -y
+
+2. Instalar Docker:
+Kubernetes necesita un motor de contenedores, y Docker la elección popular.
+sudo apt-get install -y docker.io
+
+3. Instalar paquetes necesarios para Kubernetes:
+sudo apt-get update && sudo apt-get install -y apt-transport-https curl
+
+4. Agregar la clave GPG de Kubernetes:
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+
+5. Agregar el repositorio de Kubernetes:
+sudo apt-add-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+
+6. Instalar Kubernetes:
+sudo apt-get update
+sudo apt-get install -y kubelet kubeadm kubectl
+
+7. Desactivar el swap:
+Kubernetes requiere desactivar el swap en el nodo.
+sudo swapoff -a
+Para desactivar el swap permanentemente, edita /etc/fstab y comenta o elimina la línea que contiene swap.
+
+8. Inicializar el cluster de Kubernetes:
+sudo kubeadm init --pod-network-cidr=10.244.0.0/16
+Esto dará un token y un comando que podemos usar para unir nodos al cluster. Guárdalo para futuras referencias.
+
+9. Configurar kubectl para el usuario actual:
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+10. Instalar una solución de red de pods:
+Una opción popular es Flannel.
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+
+Verificación de la instalación:
+
+Verifica el estado de los nodos:
+kubectl get nodes
+Debemos ver tu nodo con el estado "Ready".
+
+Verifica los pods:
+kubectl get pods --all-namespaces
+Todos los pods deberían estar en estado "Running" o "Completed".
+
+Crear un pod de prueba:
+kubectl create deployment nginx --image=nginx
+
+Exponer el pod:
+kubectl expose deployment nginx --type=NodePort --port=80
+
+Obtener la dirección del servicio:
+kubectl get svc
+Podemos ver el puerto asignado a nginx (por ejemplo, 80:31415/). Podemos acceder a nginx utilizando ese puerto en tu nodo.
+
+Limpiar:
+Si todo funciona correctamente, podemos eliminar el servicio y el despliegue.
+kubectl delete svc nginx
+kubectl delete deployment nginx
+Con eso, deberiamos tener un cluster de Kubernetes en funcionamiento en Ubuntu. Si planeamos añadir más nodos al cluster, utiliza el token y el comando que kubeadm init que se proporcionó anteriormente.
